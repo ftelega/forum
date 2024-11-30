@@ -14,3 +14,4 @@ spring:
 server:
   port: 8888
 signing-key: 8CBAB632711F92F73B4C48DA112B5
+token-expiration: 3_600_000

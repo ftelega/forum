@@ -21,10 +21,11 @@ public class ForumUser {
     private String username;
     private String password;
     private String timezone;
+    @Enumerated(value = EnumType.STRING)
+    @Column(length = 32)
+    private ForumRole role;
     @OneToMany(mappedBy = "user")
     private List<ForumThread> threads;
     @OneToMany(mappedBy = "user")
     private List<ForumComment> comments;
-    @Enumerated(value = EnumType.STRING)
-    private ForumRole role;
 }
