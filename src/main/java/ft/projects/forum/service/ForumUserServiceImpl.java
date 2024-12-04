@@ -2,10 +2,7 @@ package ft.projects.forum.service;
 
 import ft.projects.forum.exception.ForumException;
 import ft.projects.forum.exception.ForumExceptions;
-import ft.projects.forum.model.ForumRole;
-import ft.projects.forum.model.ForumUser;
-import ft.projects.forum.model.ForumUserRequest;
-import ft.projects.forum.model.TokenResponse;
+import ft.projects.forum.model.*;
 import ft.projects.forum.repository.ForumUserRepository;
 import ft.projects.forum.security.service.JwtService;
 import ft.projects.forum.security.service.SecurityContextService;
@@ -15,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +46,14 @@ public class ForumUserServiceImpl implements ForumUserService {
                 jwtService.getToken(user.getUsername()),
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis() + tokenExpiration), ZoneId.of(user.getTimezone()))
         );
+    }
+
+    @Override
+    public List<ForumUserResponse> getUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(u -> new ForumUserResponse(u.getUsername()))
+                .toList();
     }
 
     private void validateUsername(String username) {

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -106,5 +107,19 @@ class ForumUserServiceTest {
         verify(contextService, times(1)).getUserFromContext();
         verify(jwtService, times(1)).getToken(user.getUsername());
         assertNotNull(res);
+    }
+
+    @Test
+    public void whenGetUsers_thenVerifyCalls() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .timezone(TEST_TIMEZONE)
+                .build();
+        given(userRepository.findAll()).willReturn(List.of(user));
+        var res = userService.getUsers();
+        verify(userRepository, times(1)).findAll();
+        assertNotNull(res);
+        assertEquals(1, res.size());
+        assertEquals(user.getUsername(), res.get(0).username());
     }
 }

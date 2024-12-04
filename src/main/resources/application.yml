@@ -13,5 +13,5 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 server:
   port: 8888
-signing-key: 8CBAB632711F92F73B4C48DA112B5
-token-expiration: 3_600_000
+signing-key: 771d02d0825052bb9100e8fa5cea671dd071271c1620d938f286fbbbbb50f213
+token-expiration: 600_000
