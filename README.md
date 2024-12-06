@@ -17,8 +17,8 @@ Follow these instructions to set up and run the Forum application on your local 
 ### 📥 Clone the Repository
 
 ```bash
-git clone https://github.com/ftelega/planner.git
-cd planner
+git clone https://github.com/ftelega/forum.git
+cd forum
 ```
 
 ---
