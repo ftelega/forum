@@ -8,6 +8,5 @@ public enum ForumExceptions {
     INVALID_TITLE,
     INVALID_CONTENT,
     INVALID_PAGE,
-    INVALID_SIZE,
-    INVALID_SORT
+    INVALID_SIZE
 }

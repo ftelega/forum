@@ -8,7 +8,6 @@ import ft.projects.forum.model.ForumThreadResponse;
 import ft.projects.forum.repository.ForumThreadRepository;
 import ft.projects.forum.security.service.SecurityContextService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -16,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,19 +39,21 @@ public class ForumThreadServiceImpl implements ForumThreadService {
     }
 
     @Override
-    public Page<ForumThreadResponse> getThreads(int page, int size, String sort) {
+    public List<ForumThreadResponse> getThreads(int page, int size, boolean descending) {
         validatePage(page);
         validateSize(size);
-        validateSort(sort);
         var timezone = contextService.getUserFromContext().getTimezone();
-        return threadRepository.findAll(PageRequest.of(page, size, Sort.by(sort)))
+        var sort = descending ? Sort.by("publishedAt").descending() : Sort.by("publishedAt");
+        return threadRepository.findAll(PageRequest.of(page, size, sort))
+                .stream()
                 .map(t -> new ForumThreadResponse(
                         t.getUuid(),
                         t.getTitle(),
                         t.getContent(),
                         ZonedDateTime.ofInstant(t.getPublishedAt(), ZoneId.of(timezone))
                     )
-                );
+                )
+                .toList();
     }
 
     private void validateTitle(String title) {
@@ -67,16 +69,10 @@ public class ForumThreadServiceImpl implements ForumThreadService {
     }
 
     private void validatePage(int page) {
-        if(page <= 0) throw new ForumException(ForumExceptions.INVALID_PAGE);
+        if(page < 0) throw new ForumException(ForumExceptions.INVALID_PAGE);
     }
 
     private void validateSize(int size) {
-        if(size <= 0) throw new ForumException(ForumExceptions.INVALID_SIZE);
-    }
-
-    private void validateSort(String sort) {
-        if(sort == null || !(sort.equals("publishedAt") || sort.equals("title") || sort.equals("content"))) {
-            throw new ForumException(ForumExceptions.INVALID_SORT);
-        }
+        if(size < 1) throw new ForumException(ForumExceptions.INVALID_SIZE);
     }
 }

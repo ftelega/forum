@@ -57,53 +57,41 @@ class ForumThreadServiceTest {
     }
 
     @Test
-    public void givenValidPageSizeSort_whenGetThreads_thenVerifyCalls() {
+    public void givenValidRequest_whenGetThreads_thenVerifyCalls() {
         given(contextService.getUserFromContext()).willReturn(new ForumUser());
         given(threadRepository.findAll((Pageable) any())).willReturn(Page.empty());
-        threadService.getThreads(TEST_PAGE, TEST_SIZE, TEST_SORT);
+        threadService.getThreads(1, 1, false);
         verify(contextService, times(1)).getUserFromContext();
-        verify(threadRepository, times(1)).findAll(PageRequest.of(TEST_PAGE, TEST_SIZE, Sort.by(TEST_SORT)));
+        verify(threadRepository, times(1)).findAll(PageRequest.of(1, 1, Sort.by("publishedAt")));
+    }
+
+    @Test
+    public void givenValidRequestDescending_whenGetThreads_thenVerifyCalls() {
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        given(threadRepository.findAll((Pageable) any())).willReturn(Page.empty());
+        threadService.getThreads(1, 1, true);
+        verify(contextService, times(1)).getUserFromContext();
+        verify(threadRepository, times(1)).findAll(PageRequest.of(1, 1, Sort.by("publishedAt").descending()));
     }
 
     @Test
     public void givenInvalidPage_whenGetThreads_thenThrow() {
         assertThrows(ForumException.class, () -> {
-           threadService.getThreads(-1, TEST_SIZE, TEST_SORT);
-        });
-    }
-
-    @Test
-    public void givenInvalidPage_whenGetThreads_thenThrow2() {
-        assertThrows(ForumException.class, () -> {
-            threadService.getThreads(0, TEST_SIZE, TEST_SORT);
+           threadService.getThreads(-1, 1, false);
         });
     }
 
     @Test
     public void givenInvalidSize_whenGetThreads_thenThrow() {
         assertThrows(ForumException.class, () -> {
-            threadService.getThreads(TEST_PAGE, -1, TEST_SORT);
+            threadService.getThreads(1, -1, false);
         });
     }
 
     @Test
     public void givenInvalidSize_whenGetThreads_thenThrow2() {
         assertThrows(ForumException.class, () -> {
-            threadService.getThreads(TEST_PAGE, 0, TEST_SORT);
-        });
-    }
-
-    @Test
-    public void givenInvalidSort_whenGetThreads_thenThrow() {
-        assertThrows(ForumException.class, () -> {
-            threadService.getThreads(TEST_PAGE, TEST_SIZE, null);
-        });
-    }
-
-    @Test
-    public void givenInvalidSort_whenGetThreads_thenThrow2() {
-        assertThrows(ForumException.class, () -> {
-            threadService.getThreads(TEST_PAGE, TEST_SIZE, "") ;
+            threadService.getThreads(1, 0, false);
         });
     }
 }

@@ -57,7 +57,7 @@ public class ForumUserController {
             @ApiResponse(responseCode = "200", description = "Successfully fetched users", content = { @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ForumUserResponse.class))) }),
             @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() }),
             @ApiResponse(responseCode = "403", description = "Invalid User Authorization (Admin Role Required)", content = {  @Content() })
-    }
+        }
     )
     @SecurityRequirement(name = "JwtAuth")
     @GetMapping

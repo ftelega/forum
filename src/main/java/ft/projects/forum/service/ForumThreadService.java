@@ -2,10 +2,11 @@ package ft.projects.forum.service;
 
 import ft.projects.forum.model.ForumThreadRequest;
 import ft.projects.forum.model.ForumThreadResponse;
-import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface ForumThreadService {
 
     void createThread(ForumThreadRequest threadRequest);
-    Page<ForumThreadResponse> getThreads(int page, int size, String sort);
+    List<ForumThreadResponse> getThreads(int page, int size, boolean descending);
 }
