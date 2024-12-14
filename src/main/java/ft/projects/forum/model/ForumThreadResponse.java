@@ -5,6 +5,7 @@ import java.util.UUID;
 
 public record ForumThreadResponse(
         UUID uuid,
+        String creator,
         String title,
         String content,
         ZonedDateTime publishedAt

@@ -1,6 +1,7 @@
 package ft.projects.forum;
 
 import ft.projects.forum.model.ForumRole;
+import ft.projects.forum.model.ForumThread;
 import ft.projects.forum.model.ForumThreadRequest;
 import ft.projects.forum.model.ForumUser;
 import ft.projects.forum.repository.ForumThreadRepository;
@@ -18,6 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.UUID;
+
 import static ft.projects.forum.Constants.*;
 import static io.restassured.RestAssured.*;
 
@@ -27,8 +30,16 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
 
     private static String adminUserJwt;
     private static String testUserJwt;
+    private final ForumThreadRepository threadRepository;
+    private final ForumUserRepository userRepository;
     @LocalServerPort
     private int port;
+
+    @Autowired
+    public ForumThreadFlowTest(ForumThreadRepository threadRepository, ForumUserRepository userRepository) {
+        this.threadRepository = threadRepository;
+        this.userRepository = userRepository;
+    }
 
     @BeforeAll
     public static void setup(@Autowired ForumUserRepository userRepository, @Autowired PasswordEncoder passwordEncoder, @Autowired JwtService jwtService) {
@@ -60,6 +71,15 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
     @BeforeEach
     public void setup() {
         RestAssured.port = port;
+        threadRepository.deleteAll();
+    }
+
+    private UUID createThreadAndSetOwnershipToTestUser() {
+        var user = userRepository.findByUsername(TEST_USERNAME).get();
+        return threadRepository.save(ForumThread.builder()
+                .user(user)
+                .build()
+        ).getUuid();
     }
 
     @Test
@@ -124,6 +144,117 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
                 .log().all()
                 .when()
                 .get("/api/threads")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenUpdateContent_thenStatusNoContent() {
+        given()
+                .header("Authorization", "Bearer " + testUserJwt)
+                .param("id", createThreadAndSetOwnershipToTestUser())
+                .param("content", UUID.randomUUID().toString())
+                .log().all()
+                .when()
+                .put("/api/threads/content")
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenUpdateContent_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .param("id", UUID.randomUUID().toString())
+                .param("content", UUID.randomUUID().toString())
+                .log().all()
+                .when()
+                .put("/api/threads/content")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenUpdateContent_thenStatusUnauthorized() {
+        given()
+                .param("id", UUID.randomUUID().toString())
+                .param("content", UUID.randomUUID().toString())
+                .log().all()
+                .when()
+                .put("/api/threads/content")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenUpdateClosed_thenStatusNoContent() {
+        given()
+                .header("Authorization", "Bearer " + testUserJwt)
+                .param("id", createThreadAndSetOwnershipToTestUser())
+                .param("closed", "true")
+                .log().all()
+                .when()
+                .put("/api/threads/closed")
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenUpdateClosed_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .param("id", UUID.randomUUID().toString())
+                .param("closed", "true")
+                .log().all()
+                .when()
+                .put("/api/threads/closed")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenUpdateClosed_thenStatusUnauthorized() {
+        given()
+                .param("id", UUID.randomUUID().toString())
+                .param("closed", "true")
+                .log().all()
+                .when()
+                .put("/api/threads/closed")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenDeleteThread_thenStatusNoContent() {
+        given()
+                .header("Authorization", "Bearer " + testUserJwt)
+                .param("id", createThreadAndSetOwnershipToTestUser())
+                .log().all()
+                .when()
+                .delete("/api/threads/delete")
+                .then()
+                .statusCode(204);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenDeleteThread_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .param("id", UUID.randomUUID().toString())
+                .log().all()
+                .when()
+                .delete("/api/threads/delete")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenDeleteThread_thenStatusUnauthorized() {
+        given()
+                .param("id", UUID.randomUUID().toString())
+                .log().all()
+                .when()
+                .delete("/api/threads/delete")
                 .then()
                 .statusCode(401);
     }

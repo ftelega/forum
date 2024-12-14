@@ -24,8 +24,8 @@ public class ForumUser {
     @Enumerated(value = EnumType.STRING)
     @Column(length = 32)
     private ForumRole role;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<ForumThread> threads;
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<ForumComment> comments;
 }

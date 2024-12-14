@@ -63,4 +63,40 @@ class ForumUserControllerTest {
         var res = mockMvc.perform(MockMvcRequestBuilders.get("/api/users"));
         res.andExpect(MockMvcResultMatchers.status().isOk());
     }
+
+    @Test
+    public void givenServiceNotThrow_whenUpdateUsername_thenStatusNoContent() throws Exception {
+        var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/users/username")
+                .param("username", ""));
+        res.andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    public void givenServiceThrows_whenUpdateUsername_thenStatusBadRequest() throws Exception {
+        doThrow(new ForumException(ForumExceptions.INVALID_PASSWORD)).when(userService).updateUsername(any());
+        var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/users/username")
+               .param("username", ""));
+        res.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    public void givenServiceNotThrow_whenUpdatePassword_thenStatusNoContent() throws Exception {
+        var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/users/password")
+                .param("password", ""));
+        res.andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
+
+    @Test
+    public void givenServiceThrows_whenUpdatePassword_thenStatusBadRequest() throws Exception {
+        doThrow(new ForumException(ForumExceptions.INVALID_PASSWORD)).when(userService).updatePassword(any());
+        var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/users/password")
+                .param("password", ""));
+        res.andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    @Test
+    public void whenDelete_thenStatusNoContent() throws Exception {
+        var res = mockMvc.perform(MockMvcRequestBuilders.delete("/api/users/delete"));
+        res.andExpect(MockMvcResultMatchers.status().isNoContent());
+    }
 }

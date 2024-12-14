@@ -65,4 +65,45 @@ public class ForumUserController {
     public List<ForumUserResponse> getUsers() {
         return userService.getUsers();
     }
+
+    @Operation(summary = "Update", description = "Update Username", tags = { "user" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully updated username", content = {@Content()}),
+            @ApiResponse(responseCode = "400", description = "Invalid Username Param", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {@Content()})
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @PutMapping(path = "/username")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void updateUsername(@RequestParam String username) {
+        userService.updateUsername(username);
+    }
+
+    @Operation(summary = "Update", description = "Update Password", tags = { "user" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully updated password", content = {@Content()}),
+            @ApiResponse(responseCode = "400", description = "Invalid Password Param", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {@Content()})
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @PutMapping(path = "/password")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void updatePassword(@RequestParam String password) {
+        userService.updatePassword(password);
+    }
+
+    @Operation(summary = "Delete", description = "Delete User", tags = { "user" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully deleted user", content = {@Content()}),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {@Content()})
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @DeleteMapping(path = "/delete")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void delete() {
+        userService.delete();
+    }
 }

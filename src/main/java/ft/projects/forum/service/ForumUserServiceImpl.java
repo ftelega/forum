@@ -56,6 +56,30 @@ public class ForumUserServiceImpl implements ForumUserService {
                 .toList();
     }
 
+    @Override
+    public void updateUsername(String username) {
+        validateUsername(username);
+        var user = contextService.getUserFromContext();
+        user.setUsername(username);
+        userRepository.save(user);
+        jwtService.invalidate();
+    }
+
+    @Override
+    public void updatePassword(String password) {
+        validatePassword(password);
+        var user = contextService.getUserFromContext();
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+        jwtService.invalidate();
+    }
+
+    @Override
+    public void delete() {
+        userRepository.delete(contextService.getUserFromContext());
+        jwtService.invalidate();
+    }
+
     private void validateUsername(String username) {
         if(username == null || username.length() < 5) {
             throw new ForumException(ForumExceptions.INVALID_USERNAME);

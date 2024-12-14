@@ -122,4 +122,71 @@ class ForumUserServiceTest {
         assertEquals(1, res.size());
         assertEquals(user.getUsername(), res.get(0).username());
     }
+
+    @Test
+    public void givenValidUsername_whenUpdateUsername_thenVerifyCalls() {
+        given(userRepository.findByUsername(TEST_USERNAME)).willReturn(Optional.empty());
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        userService.updateUsername(TEST_USERNAME);
+        verify(userRepository, times(1)).findByUsername(TEST_USERNAME);
+        verify(contextService, times(1)).getUserFromContext();
+        verify(userRepository, times(1)).save(any());
+        verify(jwtService, times(1)).invalidate();
+    }
+
+    @Test
+    public void givenUsernameExists_whenUpdateUsername_thenThrow() {
+        given(userRepository.findByUsername(TEST_USERNAME)).willReturn(Optional.of(new ForumUser()));
+        assertThrows(ForumException.class, () -> {
+            userService.updateUsername(TEST_USERNAME);
+        });
+    }
+
+    @Test
+    public void givenInvalidUsername_whenUpdateUsername_thenThrow() {
+        given(userRepository.findByUsername(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+           userService.updateUsername(null);
+        });
+    }
+
+    @Test
+    public void givenInvalidUsername_whenUpdateUsername_thenThrow2() {
+        given(userRepository.findByUsername(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+            userService.updateUsername("");
+        });
+    }
+
+    @Test
+    public void givenValidPassword_whenUpdatePassword_thenVerifyCalls() {
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        userService.updatePassword(TEST_PASSWORD);
+        verify(contextService, times(1)).getUserFromContext();
+        verify(passwordEncoder, times(1)).encode(TEST_PASSWORD);
+        verify(userRepository, times(1)).save(any());
+        verify(jwtService, times(1)).invalidate();
+    }
+
+    @Test
+    public void givenInvalidPassword_whenUpdatePassword_thenThrow() {
+        assertThrows(ForumException.class, () -> {
+            userService.updatePassword(null);
+        });
+    }
+
+    @Test
+    public void givenInvalidPassword_whenUpdatePassword_thenThrow2() {
+        assertThrows(ForumException.class, () -> {
+            userService.updatePassword("");
+        });
+    }
+
+    @Test
+    public void whenDelete_thenVerifyCalls() {
+        userService.delete();
+        verify(contextService, times(1)).getUserFromContext();
+        verify(userRepository, times(1)).delete(any());
+        verify(jwtService, times(1)).invalidate();
+    }
 }

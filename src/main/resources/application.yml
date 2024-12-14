@@ -15,3 +15,6 @@ server:
   port: 8888
 signing-key: 771d02d0825052bb9100e8fa5cea671dd071271c1620d938f286fbbbbb50f213
 token-expiration: 600_000
+logging:
+  level:
+    org.springframework.security: TRACE

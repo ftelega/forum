@@ -12,8 +12,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
 
 import static ft.projects.forum.Constants.*;
 import static io.restassured.RestAssured.*;
@@ -22,14 +25,33 @@ import static io.restassured.RestAssured.*;
 @AutoConfigureMockMvc
 public class ForumUserFlowTest extends AbstractIntegrationTest {
 
-    private static String adminUserJwt;
-    private static String testUserJwt;
+    private final ForumUserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
     @LocalServerPort
     private int port;
 
-    @BeforeAll
-    public static void setup(@Autowired ForumUserRepository userRepository, @Autowired PasswordEncoder passwordEncoder, @Autowired JwtService jwtService) {
+    @Autowired
+    public ForumUserFlowTest(ForumUserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+    }
+
+    @AfterAll
+    public static void clean(@Autowired ForumUserRepository userRepository, @Autowired JwtService jwtService) {
         userRepository.deleteAll();
+        clearInvalidatedTokens(jwtService);
+    }
+
+    @BeforeEach
+    public void setup() {
+        RestAssured.port = port;
+        userRepository.deleteAll();
+        clearInvalidatedTokens(jwtService);
+    }
+
+    private String getAdminUserJwt() {
         userRepository.save(ForumUser.builder()
                 .username(ADMIN_USERNAME)
                 .password(passwordEncoder.encode(ADMIN_PASSWORD))
@@ -37,6 +59,10 @@ public class ForumUserFlowTest extends AbstractIntegrationTest {
                 .role(ForumRole.ROLE_ADMIN)
                 .build()
         );
+        return jwtService.getToken(ADMIN_USERNAME);
+    }
+
+    private String getNormalUserJwt() {
         userRepository.save(ForumUser.builder()
                 .username(TEST_USERNAME)
                 .password(passwordEncoder.encode(TEST_PASSWORD))
@@ -44,22 +70,23 @@ public class ForumUserFlowTest extends AbstractIntegrationTest {
                 .role(ForumRole.ROLE_USER)
                 .build()
         );
-        adminUserJwt = jwtService.getToken(ADMIN_USERNAME);
-        testUserJwt = jwtService.getToken(TEST_USERNAME);
+        return jwtService.getToken(TEST_USERNAME);
     }
 
-    @AfterAll
-    public static void clean(@Autowired ForumUserRepository userRepository) {
-        userRepository.deleteAll();
-    }
-
-    @BeforeEach
-    public void setup() {
-        RestAssured.port = port;
+    private static void clearInvalidatedTokens(JwtService jwtService) {
+        try {
+            Field field = jwtService.getClass().getDeclaredField("INVALIDATED");
+            field.setAccessible(true);
+            var invalidatedTokens = (List<String>) field.get(null);
+            invalidatedTokens.clear();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
     public void givenValidAuth_whenLogin_thenStatusOk() {
+        getNormalUserJwt();
         given()
                 .header("Authorization", "Basic " + Base64.getEncoder().encodeToString((TEST_USERNAME + ":" + TEST_PASSWORD).getBytes(StandardCharsets.UTF_8)))
                 .log().all()
@@ -93,7 +120,7 @@ public class ForumUserFlowTest extends AbstractIntegrationTest {
     @Test
     public void givenValidAuthAndAdminRole_whenGetUsers_thenStatusOk() {
         given()
-                .header("Authorization", "Bearer " + adminUserJwt)
+                .header("Authorization", "Bearer " + getAdminUserJwt())
                 .log().all()
                 .when()
                 .get("/api/users")
@@ -104,7 +131,7 @@ public class ForumUserFlowTest extends AbstractIntegrationTest {
     @Test
     public void givenValidAuthAndNoAdminRole_whenGetUsers_thenStatusForbidden() {
         given()
-                .header("Authorization", "Bearer " + testUserJwt)
+                .header("Authorization", "Bearer " + getNormalUserJwt())
                 .log().all()
                 .when()
                 .get("/api/users")
@@ -129,6 +156,135 @@ public class ForumUserFlowTest extends AbstractIntegrationTest {
                 .log().all()
                 .when()
                 .get("/api/users")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenUpdateUsername_thenStatusNoContentAndTokenInvalid() {
+        var token = getNormalUserJwt();
+        given()
+                .header("Authorization", "Bearer " + token)
+                .param("username", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/username")
+                .then()
+                .statusCode(204);
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .log().all()
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenUpdateUsername_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .param("username", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/username")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenUpdateUsername_thenStatusUnauthorized() {
+        given()
+                .param("username", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/username")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenUpdatePassword_thenStatusNoContentAndTokenInvalid() {
+        var token = getNormalUserJwt();
+        given()
+                .header("Authorization", "Bearer " + token)
+                .param("password", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/password")
+                .then()
+                .statusCode(204);
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .log().all()
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenUpdatePassword_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .param("password", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/password")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenUpdatePassword_thenStatusUnauthorized() {
+        given()
+                .param("password", UUID.randomUUID())
+                .log().all()
+                .when()
+                .put("/api/users/password")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenValidAuth_whenDelete_thenStatusNoContentAndTokenInvalid() {
+        var token = getNormalUserJwt();
+        given()
+                .header("Authorization", "Bearer " + token)
+                .log().all()
+                .when()
+                .delete("/api/users/delete")
+                .then()
+                .statusCode(204);
+
+        given()
+                .header("Authorization", "Bearer " + token)
+                .log().all()
+                .when()
+                .get("/api/users")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenInvalidAuth_whenDelete_thenStatusUnauthorized() {
+        given()
+                .header("Authorization", "Bearer invalid")
+                .log().all()
+                .when()
+                .delete("/api/users/delete")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    public void givenNoAuth_whenDelete_thenStatusUnauthorized() {
+         given()
+                .log().all()
+                .when()
+                .delete("/api/users/delete")
                 .then()
                 .statusCode(401);
     }

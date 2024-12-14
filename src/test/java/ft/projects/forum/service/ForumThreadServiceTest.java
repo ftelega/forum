@@ -1,6 +1,7 @@
 package ft.projects.forum.service;
 
 import ft.projects.forum.exception.ForumException;
+import ft.projects.forum.model.ForumThread;
 import ft.projects.forum.model.ForumThreadRequest;
 import ft.projects.forum.model.ForumUser;
 import ft.projects.forum.repository.ForumThreadRepository;
@@ -10,6 +11,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
@@ -92,6 +96,153 @@ class ForumThreadServiceTest {
     public void givenInvalidSize_whenGetThreads_thenThrow2() {
         assertThrows(ForumException.class, () -> {
             threadService.getThreads(1, 0, false);
+        });
+    }
+
+    @Test
+    public void givenValidRequest_whenUpdateContent_thenVerifyCalls() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(user);
+        threadService.updateContent(UUID.randomUUID(), TEST_THREAD_CONTENT);
+        verify(threadRepository, times(1)).findById(any());
+        verify(contextService, times(1)).getUserFromContext();
+        verify(threadRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void givenInvalidId_whenUpdateContent_thenThrow() {
+        given(threadRepository.findById(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+            threadService.updateContent(UUID.randomUUID(), TEST_THREAD_CONTENT);
+        });
+    }
+
+    @Test
+    public void givenInvalidOwner_whenUpdateContent_thenThrow() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        assertThrows(ForumException.class, () -> {
+            threadService.updateContent(UUID.randomUUID(), TEST_THREAD_CONTENT);
+        });
+    }
+
+    @Test
+    public void givenInvalidContent_whenUpdateContent_thenThrow() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(user);
+        assertThrows(ForumException.class, () -> {
+            threadService.updateContent(UUID.randomUUID(), null);
+        });
+    }
+
+    @Test
+    public void givenInvalidContent_whenUpdateContent_thenThrow2() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(user);
+        assertThrows(ForumException.class, () -> {
+            threadService.updateContent(UUID.randomUUID(), "");
+        });
+    }
+
+    @Test
+    public void givenValidRequest_whenUpdateClosed_thenVerifyCalls() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(user);
+        threadService.updateClosed(UUID.randomUUID(), true);
+        verify(threadRepository, times(1)).findById(any());
+        verify(contextService, times(1)).getUserFromContext();
+        verify(threadRepository, times(1)).save(any());
+    }
+
+    @Test
+    public void givenInvalidId_whenUpdateClosed_thenThrow() {
+        given(threadRepository.findById(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+            threadService.updateClosed(UUID.randomUUID(), true);
+        });
+    }
+
+    @Test
+    public void givenInvalidOwner_whenUpdateClosed_thenThrow() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        assertThrows(ForumException.class, () -> {
+            threadService.updateClosed(UUID.randomUUID(), true);
+        });
+    }
+
+    @Test
+    public void givenValidRequest_whenDeleteThread_thenVerifyCalls() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(user);
+        threadService.deleteThread(UUID.randomUUID());
+        verify(threadRepository, times(1)).findById(any());
+        verify(contextService, times(1)).getUserFromContext();
+        verify(threadRepository, times(1)).delete(any());
+    }
+
+    @Test
+    public void givenInvalidId_whenDeleteThread_thenThrow() {
+        given(threadRepository.findById(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+            threadService.deleteThread(UUID.randomUUID());
+        });
+    }
+
+    @Test
+    public void givenInvalidOwner_whenDeleteThread_thenThrow() {
+        var user = ForumUser.builder()
+                .username(TEST_USERNAME)
+                .build();
+        var thread = ForumThread.builder()
+                .user(user)
+                .build();
+        given(threadRepository.findById(any())).willReturn(Optional.of(thread));
+        given(contextService.getUserFromContext()).willReturn(new ForumUser());
+        assertThrows(ForumException.class, () -> {
+            threadService.deleteThread(UUID.randomUUID());
         });
     }
 }

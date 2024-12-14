@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/api/threads")
@@ -54,5 +55,47 @@ public class ForumThreadController {
             @RequestParam(required = false, defaultValue = "5") int size,
             @RequestParam(required = false, defaultValue = "true") boolean descending) {
         return threadService.getThreads(page, size, descending);
+    }
+
+    @Operation(summary = "Update", description = "Update Content", tags = { "thread" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully updated content", content = { @Content() }),
+            @ApiResponse(responseCode = "400", description = "Thread not found / You are not owner", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() })
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @PutMapping(path = "/content")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void updateContent(@RequestParam UUID id, @RequestParam String content) {
+        threadService.updateContent(id, content);
+    }
+
+    @Operation(summary = "Update", description = "Update Closed", tags = { "thread" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully updated closed status", content = { @Content() }),
+            @ApiResponse(responseCode = "400", description = "Thread not found / You are not owner", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() })
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @PutMapping(path = "/closed")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void updateClosed(@RequestParam UUID id, @RequestParam boolean closed) {
+        threadService.updateClosed(id, closed);
+    }
+
+    @Operation(summary = "Delete", description = "Delete Thread", tags = { "thread" })
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully updated closed status", content = { @Content() }),
+            @ApiResponse(responseCode = "400", description = "Thread not found / You are not owner", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() })
+        }
+    )
+    @SecurityRequirement(name = "JwtAuth")
+    @DeleteMapping(path = "/delete")
+    @ResponseStatus(value = HttpStatus.NO_CONTENT)
+    public void deleteThread(@RequestParam UUID id) {
+        threadService.deleteThread(id);
     }
 }

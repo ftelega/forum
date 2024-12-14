@@ -11,4 +11,7 @@ public interface ForumUserService {
     void register(ForumUserRequest userRequest);
     TokenResponse login();
     List<ForumUserResponse> getUsers();
+    void updateUsername(String username);
+    void updatePassword(String password);
+    void delete();
 }

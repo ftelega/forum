@@ -16,6 +16,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -48,12 +49,34 @@ public class ForumThreadServiceImpl implements ForumThreadService {
                 .stream()
                 .map(t -> new ForumThreadResponse(
                         t.getUuid(),
+                        t.getUser().getUsername(),
                         t.getTitle(),
                         t.getContent(),
                         ZonedDateTime.ofInstant(t.getPublishedAt(), ZoneId.of(timezone))
                     )
                 )
                 .toList();
+    }
+
+    @Override
+    public void updateContent(UUID uuid, String content) {
+        var thread = getThreadIfExistsAndValidOwnership(uuid);
+        validateContent(content);
+        thread.setContent(content);
+        threadRepository.save(thread);
+    }
+
+    @Override
+    public void updateClosed(UUID uuid, boolean closed) {
+        var thread = getThreadIfExistsAndValidOwnership(uuid);
+        thread.setClosed(closed);
+        threadRepository.save(thread);
+    }
+
+    @Override
+    public void deleteThread(UUID uuid) {
+        var thread = getThreadIfExistsAndValidOwnership(uuid);
+        threadRepository.delete(thread);
     }
 
     private void validateTitle(String title) {
@@ -74,5 +97,13 @@ public class ForumThreadServiceImpl implements ForumThreadService {
 
     private void validateSize(int size) {
         if(size < 1) throw new ForumException(ForumExceptions.INVALID_SIZE);
+    }
+
+    private ForumThread getThreadIfExistsAndValidOwnership(UUID uuid) {
+        var threadOptional = threadRepository.findById(uuid);
+        if(threadOptional.isEmpty()) throw new ForumException(ForumExceptions.INVALID_ID);
+        var thread = threadOptional.get();
+        if(!thread.getUser().getUsername().equals(contextService.getUserFromContext().getUsername())) throw new ForumException(ForumExceptions.INVALID_OWNER);
+        return thread;
     }
 }
