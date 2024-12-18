@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +25,7 @@ public class ForumThreadServiceImpl implements ForumThreadService {
 
     private final ForumThreadRepository threadRepository;
     private final SecurityContextService contextService;
+    private final DateTimeFormatter formatter;
 
     @Override
     public void createThread(ForumThreadRequest threadRequest) {
@@ -52,7 +54,7 @@ public class ForumThreadServiceImpl implements ForumThreadService {
                         t.getUser().getUsername(),
                         t.getTitle(),
                         t.getContent(),
-                        ZonedDateTime.ofInstant(t.getPublishedAt(), ZoneId.of(timezone))
+                        formatter.format(ZonedDateTime.ofInstant(t.getPublishedAt(), ZoneId.of(timezone)))
                     )
                 )
                 .toList();

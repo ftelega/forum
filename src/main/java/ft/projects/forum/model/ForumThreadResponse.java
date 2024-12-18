@@ -1,6 +1,5 @@
 package ft.projects.forum.model;
 
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 public record ForumThreadResponse(
@@ -8,6 +7,6 @@ public record ForumThreadResponse(
         String creator,
         String title,
         String content,
-        ZonedDateTime publishedAt
+        String publishedAt
 ) {
 }

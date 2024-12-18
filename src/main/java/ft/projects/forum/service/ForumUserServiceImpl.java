@@ -7,11 +7,11 @@ import ft.projects.forum.repository.ForumUserRepository;
 import ft.projects.forum.security.service.JwtService;
 import ft.projects.forum.security.service.SecurityContextService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -22,8 +22,7 @@ public class ForumUserServiceImpl implements ForumUserService {
     private final PasswordEncoder passwordEncoder;
     private final SecurityContextService contextService;
     private final JwtService jwtService;
-    @Value("${token-expiration}")
-    private Long tokenExpiration;
+    private final DateTimeFormatter formatter;
 
     @Override
     public void register(ForumUserRequest userRequest) {
@@ -42,9 +41,11 @@ public class ForumUserServiceImpl implements ForumUserService {
     @Override
     public TokenResponse login() {
         var user = contextService.getUserFromContext();
+        var jwt = jwtService.getToken(user.getUsername());
+        var expiration = ZonedDateTime.ofInstant(Instant.ofEpochMilli(jwtService.getDate(jwt).getTime()), ZoneId.of(user.getTimezone()));
         return new TokenResponse(
-                jwtService.getToken(user.getUsername()),
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis() + tokenExpiration), ZoneId.of(user.getTimezone()))
+                jwt,
+                formatter.format(expiration)
         );
     }
 

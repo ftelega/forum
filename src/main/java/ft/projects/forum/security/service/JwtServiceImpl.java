@@ -1,5 +1,6 @@
 package ft.projects.forum.security.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 @Service
 public class JwtServiceImpl implements JwtService {
@@ -30,13 +32,13 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public String getUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(Keys.hmacShaKeyFor(signingKey.getBytes(StandardCharsets.UTF_8)))
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+    public String getUsername(String jwt) {
+        return extractClaim(jwt, Claims::getSubject);
+    }
+
+    @Override
+    public Date getDate(String jwt) {
+        return extractClaim(jwt, Claims::getExpiration);
     }
 
     @Override
@@ -58,5 +60,14 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public void clearToken() {
         JWT.remove();
+    }
+
+    private <T> T extractClaim(String jwt, Function<Claims, T> extractor) {
+        var claims = Jwts.parser()
+                .setSigningKey(Keys.hmacShaKeyFor(signingKey.getBytes(StandardCharsets.UTF_8)))
+                .build()
+                .parseClaimsJws(jwt)
+                .getBody();
+        return extractor.apply(claims);
     }
 }

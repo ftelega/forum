@@ -6,11 +6,11 @@ import ft.projects.forum.model.ForumUserRequest;
 import ft.projects.forum.repository.ForumUserRepository;
 import ft.projects.forum.security.service.JwtService;
 import ft.projects.forum.security.service.SecurityContextService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,12 +24,8 @@ class ForumUserServiceTest {
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final SecurityContextService contextService = mock(SecurityContextService.class);
     private final JwtService jwtService = mock(JwtService.class);
-    private final ForumUserService userService = new ForumUserServiceImpl(userRepository, passwordEncoder, contextService, jwtService);
-
-    @BeforeEach
-    public void setup() {
-        ReflectionTestUtils.setField(userService, "tokenExpiration", 3_600_000L);
-    }
+    private final DateTimeFormatter formatter = mock(DateTimeFormatter.class);
+    private final ForumUserService userService = new ForumUserServiceImpl(userRepository, passwordEncoder, contextService, jwtService, formatter);
 
     @Test
     public void givenValidRequest_whenRegister_thenVerifyCalls() {
@@ -103,9 +99,12 @@ class ForumUserServiceTest {
                 .timezone(TEST_TIMEZONE)
                 .build();
         given(contextService.getUserFromContext()).willReturn(user);
+        given(jwtService.getDate(any())).willReturn(new Date());
         var res = userService.login();
         verify(contextService, times(1)).getUserFromContext();
         verify(jwtService, times(1)).getToken(user.getUsername());
+        verify(jwtService, times(1)).getDate(any());
+        verify(formatter, times(1)).format(any());
         assertNotNull(res);
     }
 

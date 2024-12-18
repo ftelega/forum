@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +24,8 @@ class ForumThreadServiceTest {
 
     private final ForumThreadRepository threadRepository = mock(ForumThreadRepository.class);
     private final SecurityContextService contextService = mock(SecurityContextService.class);
-    private final ForumThreadService threadService = new ForumThreadServiceImpl(threadRepository, contextService);
+    private final DateTimeFormatter formatter = mock(DateTimeFormatter.class);
+    private final ForumThreadService threadService = new ForumThreadServiceImpl(threadRepository, contextService, formatter);
 
     @Test
     public void givenValidForumThreadRequestObject_whenCreateForumThread_thenVerifyCalls() {
