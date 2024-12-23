@@ -1,9 +1,7 @@
 package ft.projects.forum;
 
-import ft.projects.forum.model.ForumRole;
-import ft.projects.forum.model.ForumThread;
-import ft.projects.forum.model.ForumThreadRequest;
-import ft.projects.forum.model.ForumUser;
+import ft.projects.forum.model.*;
+import ft.projects.forum.repository.ForumCommentRepository;
 import ft.projects.forum.repository.ForumThreadRepository;
 import ft.projects.forum.repository.ForumUserRepository;
 import ft.projects.forum.security.service.JwtService;
@@ -19,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static ft.projects.forum.Constants.*;
@@ -26,22 +25,27 @@ import static io.restassured.RestAssured.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class ForumThreadFlowTest extends AbstractIntegrationTest {
+public class ForumCommentFlowTest extends AbstractIntegrationTest {
 
     private static String testUserJwt;
-    private final ForumThreadRepository threadRepository;
+    private static UUID testThreadId;
+    private final ForumCommentRepository commentRepository;
     private final ForumUserRepository userRepository;
     @LocalServerPort
     private int port;
 
     @Autowired
-    public ForumThreadFlowTest(ForumThreadRepository threadRepository, ForumUserRepository userRepository) {
-        this.threadRepository = threadRepository;
+    public ForumCommentFlowTest(ForumCommentRepository commentRepository, ForumUserRepository userRepository) {
+        this.commentRepository = commentRepository;
         this.userRepository = userRepository;
     }
 
     @BeforeAll
-    public static void setup(@Autowired ForumUserRepository userRepository, @Autowired PasswordEncoder passwordEncoder, @Autowired JwtService jwtService) {
+    public static void setup(
+            @Autowired ForumUserRepository userRepository,
+            @Autowired PasswordEncoder passwordEncoder,
+            @Autowired JwtService jwtService,
+            @Autowired ForumThreadRepository threadRepository) {
         userRepository.deleteAll();
         userRepository.save(ForumUser.builder()
                 .username(TEST_USERNAME)
@@ -50,6 +54,13 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
                 .role(ForumRole.ROLE_USER)
                 .build()
         );
+        testThreadId = threadRepository.save(ForumThread.builder()
+                .title(TEST_THREAD_TITLE)
+                .content(TEST_THREAD_CONTENT)
+                .publishedAt(Instant.now())
+                .isClosed(false)
+                .build()
+        ).getUuid();
         testUserJwt = jwtService.getToken(TEST_USERNAME);
     }
 
@@ -61,79 +72,82 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
     @BeforeEach
     public void setup() {
         RestAssured.port = port;
-        threadRepository.deleteAll();
+        commentRepository.deleteAll();
     }
 
-    private UUID createThreadAndSetOwnershipToTestUser() {
+    private UUID createCommentAndSetOwnershipToTestUser() {
         var user = userRepository.findByUsername(TEST_USERNAME).get();
-        return threadRepository.save(ForumThread.builder()
+        return commentRepository.save(ForumComment.builder()
                 .user(user)
                 .build()
         ).getUuid();
     }
 
     @Test
-    public void givenValidAuth_whenCreateThread_thenStatusNoContent() {
+    public void givenValidAuth_whenCreateComment_thenStatusNoContent() {
         given()
                 .header("Authorization", "Bearer " + testUserJwt)
                 .contentType(ContentType.JSON)
-                .body(new ForumThreadRequest(TEST_THREAD_TITLE, TEST_THREAD_CONTENT))
+                .body(new ForumCommentRequest(testThreadId, TEST_COMMENT_CONTENT))
                 .log().all()
                 .when()
-                .post("/api/threads/create")
+                .post("/api/comments/create")
                 .then()
                 .statusCode(204);
     }
 
     @Test
-    public void givenInvalidAuth_whenCreateThread_thenStatusUnauthorized() {
+    public void givenInvalidAuth_whenCreateComment_thenStatusUnauthorized() {
         given()
                 .header("Authorization", "Bearer invalid")
                 .log().all()
                 .when()
-                .post("/api/threads/create")
+                .post("/api/comments/create")
                 .then()
                 .statusCode(401);
     }
 
     @Test
-    public void givenNoAuth_whenCreateThread_thenStatusUnauthorized() {
+    public void givenNoAuth_whenCreateComment_thenStatusUnauthorized() {
         given()
                 .log().all()
                 .when()
-                .post("/api/threads/create")
+                .post("/api/comments/create")
                 .then()
                 .statusCode(401);
     }
 
     @Test
-    public void givenValidAuth_whenGetThreads_thenStatusOk() {
+    public void givenValidAuth_whenGetCommentsForThread_thenStatusOk() {
         given()
                 .header("Authorization", "Bearer " + testUserJwt)
+                .param("id", testThreadId)
                 .log().all()
                 .when()
-                .get("/api/threads")
+                .get("/api/comments")
                 .then()
                 .statusCode(200);
     }
 
     @Test
-    public void givenInvalidAuth_whenGetThreads_thenStatusUnauthorized() {
+    public void givenInvalidAuth_whenGetCommentsForThread_thenStatusUnauthorized() {
         given()
                 .header("Authorization", "Bearer invalid")
+                .param("id", testThreadId)
                 .log().all()
                 .when()
-                .get("/api/threads")
+                .get("/api/comments")
                 .then()
                 .statusCode(401);
     }
 
     @Test
-    public void givenNoAuth_whenGetThreads_thenStatusUnauthorized() {
+    public void givenNoAuth_whenGetCommentsForThread_thenStatusUnauthorized() {
         given()
+                .param("id", testThreadId)
                 .log().all()
                 .when()
-                .get("/api/threads")
+                .get("/api/comments")
                 .then()
                 .statusCode(401);
     }
@@ -142,11 +156,11 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
     public void givenValidAuth_whenUpdateContent_thenStatusNoContent() {
         given()
                 .header("Authorization", "Bearer " + testUserJwt)
-                .param("id", createThreadAndSetOwnershipToTestUser())
+                .param("id", createCommentAndSetOwnershipToTestUser())
                 .param("content", UUID.randomUUID().toString())
                 .log().all()
                 .when()
-                .put("/api/threads/content")
+                .put("/api/comments/content")
                 .then()
                 .statusCode(204);
     }
@@ -159,7 +173,7 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
                 .param("content", UUID.randomUUID().toString())
                 .log().all()
                 .when()
-                .put("/api/threads/content")
+                .put("/api/comments/content")
                 .then()
                 .statusCode(401);
     }
@@ -171,80 +185,42 @@ public class ForumThreadFlowTest extends AbstractIntegrationTest {
                 .param("content", UUID.randomUUID().toString())
                 .log().all()
                 .when()
-                .put("/api/threads/content")
+                .put("/api/comments/content")
                 .then()
                 .statusCode(401);
     }
 
     @Test
-    public void givenValidAuth_whenUpdateClosed_thenStatusNoContent() {
+    public void givenValidAuth_whenDeleteComment_thenStatusNoContent() {
         given()
                 .header("Authorization", "Bearer " + testUserJwt)
-                .param("id", createThreadAndSetOwnershipToTestUser())
-                .param("closed", "true")
+                .param("id", createCommentAndSetOwnershipToTestUser())
                 .log().all()
                 .when()
-                .put("/api/threads/closed")
+                .delete("/api/comments/delete")
                 .then()
                 .statusCode(204);
     }
 
     @Test
-    public void givenInvalidAuth_whenUpdateClosed_thenStatusUnauthorized() {
-        given()
-                .header("Authorization", "Bearer invalid")
-                .param("id", UUID.randomUUID().toString())
-                .param("closed", "true")
-                .log().all()
-                .when()
-                .put("/api/threads/closed")
-                .then()
-                .statusCode(401);
-    }
-
-    @Test
-    public void givenNoAuth_whenUpdateClosed_thenStatusUnauthorized() {
-        given()
-                .param("id", UUID.randomUUID().toString())
-                .param("closed", "true")
-                .log().all()
-                .when()
-                .put("/api/threads/closed")
-                .then()
-                .statusCode(401);
-    }
-
-    @Test
-    public void givenValidAuth_whenDeleteThread_thenStatusNoContent() {
-        given()
-                .header("Authorization", "Bearer " + testUserJwt)
-                .param("id", createThreadAndSetOwnershipToTestUser())
-                .log().all()
-                .when()
-                .delete("/api/threads/delete")
-                .then()
-                .statusCode(204);
-    }
-
-    @Test
-    public void givenInvalidAuth_whenDeleteThread_thenStatusUnauthorized() {
+    public void givenInvalidAuth_whenDeleteComment_thenStatusUnauthorized() {
         given()
                 .header("Authorization", "Bearer invalid")
                 .param("id", UUID.randomUUID().toString())
                 .log().all()
                 .when()
-                .delete("/api/threads/delete")
+                .delete("/api/comments/delete")
                 .then()
                 .statusCode(401);
     }
 
     @Test
-    public void givenNoAuth_whenDeleteThread_thenStatusUnauthorized() {
+    public void givenNoAuth_whenDeleteComment_thenStatusUnauthorized() {
         given()
                 .param("id", UUID.randomUUID().toString())
                 .log().all()
                 .when()
-                .delete("/api/threads/delete")
+                .delete("/api/comments/delete")
                 .then()
                 .statusCode(401);
     }

@@ -77,7 +77,7 @@ class ForumThreadControllerTest {
 
     @Test
     public void givenServiceThrows_whenUpdateContent_thenStatusBadRequest() throws Exception {
-        willThrow(new ForumException(ForumExceptions.INVALID_TITLE)).given(threadService).updateContent(any(), any());
+        willThrow(new ForumException(ForumExceptions.INVALID_CONTENT)).given(threadService).updateContent(any(), any());
         var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/threads/content")
                 .param("id", UUID.randomUUID().toString())
                 .param("content", ""));
@@ -94,7 +94,7 @@ class ForumThreadControllerTest {
 
     @Test
     public void givenServiceThrows_whenUpdateClosed_thenStatusBadRequest() throws Exception {
-        willThrow(new ForumException(ForumExceptions.INVALID_TITLE)).given(threadService).updateClosed(any(), anyBoolean());
+        willThrow(new ForumException(ForumExceptions.INVALID_ID)).given(threadService).updateClosed(any(), anyBoolean());
         var res = mockMvc.perform(MockMvcRequestBuilders.put("/api/threads/closed")
                 .param("id", UUID.randomUUID().toString())
                 .param("closed", "true"));
@@ -110,7 +110,7 @@ class ForumThreadControllerTest {
 
     @Test
     public void givenServiceThrows_whenDeleteThread_thenStatusBadRequest() throws Exception {
-        willThrow(new ForumException(ForumExceptions.INVALID_TITLE)).given(threadService).deleteThread(any());
+        willThrow(new ForumException(ForumExceptions.INVALID_ID)).given(threadService).deleteThread(any());
        var res = mockMvc.perform(MockMvcRequestBuilders.delete("/api/threads/delete")
                 .param("id", UUID.randomUUID().toString()));
         res.andExpect(MockMvcResultMatchers.status().isBadRequest());

@@ -5,6 +5,7 @@ import ft.projects.forum.model.ForumThreadRequest;
 import ft.projects.forum.model.ForumThreadResponse;
 import ft.projects.forum.service.ForumThreadService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,8 +43,8 @@ public class ForumThreadController {
 
     @Operation(summary = "Get", description = "Get Threads", tags = { "thread" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully fetched threads", content = { @Content() }),
-            @ApiResponse(responseCode = "400", description = "Invalid Request Param", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
+            @ApiResponse(responseCode = "200", description = "Successfully fetched threads", content = { @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ForumThreadResponse.class))) }),
+            @ApiResponse(responseCode = "400", description = "Invalid Request Param",  content = { @Content() }),
             @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() })
         }
     )
@@ -87,7 +88,7 @@ public class ForumThreadController {
 
     @Operation(summary = "Delete", description = "Delete Thread", tags = { "thread" })
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Successfully updated closed status", content = { @Content() }),
+            @ApiResponse(responseCode = "204", description = "Successfully deleted thread", content = { @Content() }),
             @ApiResponse(responseCode = "400", description = "Thread not found / You are not owner", content = { @Content(mediaType = "application/json", schema = @Schema(implementation = ForumExceptionResponse.class)) }),
             @ApiResponse(responseCode = "401", description = "Invalid JWT Authentication", content = {  @Content() })
         }

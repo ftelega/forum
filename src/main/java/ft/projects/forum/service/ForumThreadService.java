@@ -1,5 +1,6 @@
 package ft.projects.forum.service;
 
+import ft.projects.forum.model.ForumThread;
 import ft.projects.forum.model.ForumThreadRequest;
 import ft.projects.forum.model.ForumThreadResponse;
 
@@ -13,4 +14,5 @@ public interface ForumThreadService {
     void updateContent(UUID uuid, String content);
     void updateClosed(UUID uuid, boolean closed);
     void deleteThread(UUID uuid);
+    ForumThread getThread(UUID uuid);
 }

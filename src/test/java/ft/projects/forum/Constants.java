@@ -10,4 +10,5 @@ public interface Constants {
     String TEST_TIMEZONE = "Europe/Warsaw";
     String TEST_THREAD_TITLE = "title";
     String TEST_THREAD_CONTENT = "content";
+    String TEST_COMMENT_CONTENT = "content-comment";
 }

@@ -247,4 +247,20 @@ class ForumThreadServiceTest {
             threadService.deleteThread(UUID.randomUUID());
         });
     }
+
+    @Test
+    public void givenThreadExists_whenGetThread_thenVerifyCalls() {
+        given(threadRepository.findById(any())).willReturn(Optional.of(new ForumThread()));
+        var res = threadService.getThread(UUID.randomUUID());
+        verify(threadRepository, times(1)).findById(any());
+        assertNotNull(res);
+    }
+
+    @Test
+    public void givenThreadNotExist_whenGetThread_thenVerifyCalls() {
+        given(threadRepository.findById(any())).willReturn(Optional.empty());
+        assertThrows(ForumException.class, () -> {
+            threadService.getThread(UUID.randomUUID());
+        });
+    }
 }

@@ -10,5 +10,6 @@ public enum ForumExceptions {
     INVALID_PAGE,
     INVALID_SIZE,
     INVALID_ID,
-    INVALID_OWNER
+    INVALID_OWNER,
+    THREAD_CLOSED
 }

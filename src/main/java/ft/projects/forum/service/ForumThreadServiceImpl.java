@@ -81,6 +81,12 @@ public class ForumThreadServiceImpl implements ForumThreadService {
         threadRepository.delete(thread);
     }
 
+    @Override
+    public ForumThread getThread(UUID uuid) {
+        return threadRepository.findById(uuid)
+                .orElseThrow(() -> new ForumException(ForumExceptions.INVALID_ID));
+    }
+
     private void validateTitle(String title) {
         if(title == null || title.length() < 5) {
             throw new ForumException(ForumExceptions.INVALID_TITLE);
